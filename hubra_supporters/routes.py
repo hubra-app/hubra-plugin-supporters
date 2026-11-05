@@ -725,7 +725,8 @@ def _open_goal(goal_id: int):
 @permission_required("goals", "update", "Run fundraising goals and record donations")
 def record_donation(goal_id: int):
     """A donation that came in (bank, cash, Twint): booked as income now."""
-    from hubra.api.finance.services import TransactionsService
+    from hubra.core.models.finance import Transaction
+    from hubra.core.utils import log_audit
 
     member = get_current_member()
     goal, err = _get(SupportersGoal, goal_id)
@@ -752,19 +753,21 @@ def record_donation(goal_id: int):
         created_by=member.id,
     )
     payee = name or _names([donor_id]).get(donor_id or 0)
-    tx = TransactionsService.create(
-        {
-            "date": donation.donated_on,
-            "description": f"Spende: {goal.title}"[:255],
-            "category_id": goal.category_id,
-            "member_id": donor_id,
-            "payee_name": payee,
-            "amount": donation.amount,
-            "method": method,
-            "type": "income",
-        },
-        member.id,
+    # The books' transactions table is core, so the income is written there
+    # directly (plugins never import the Finances plugin).
+    tx = Transaction(
+        date=donation.donated_on,
+        description=f"Spende: {goal.title}"[:255],
+        category_id=goal.category_id,
+        member_id=donor_id,
+        payee_name=payee,
+        amount=donation.amount,
+        method=method,
+        type="income",
     )
+    db.session.add(tx)
+    db.session.flush()
+    log_audit(member.id, "create_transaction", "Transaction", tx.id, tx.description)
     donation.transaction_id = tx.id
     db.session.add(donation)
     db.session.commit()
