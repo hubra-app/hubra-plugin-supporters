@@ -1,6 +1,7 @@
-# Example
+# Supporters
 
-## 0.1.0
+## 1.0.0
 
-First version of the template: a notice board with one table, an API, a
-club-app screen, a setting and tests.
+First version: sponsor packages, sponsors with logos and yearly invoices,
+fundraising goals with recorded donations and member pledges, and a public
+endpoint for the club website.
