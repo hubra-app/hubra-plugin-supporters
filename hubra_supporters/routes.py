@@ -504,33 +504,32 @@ def get_logo(sponsor_id: int):
 
 
 def _party_for(s: SupportersSponsor, actor: int) -> int:
-    from hubra.api.finance.services import ExternalPartiesService
+    """The sponsor's outside party in Finance: made the first time, then kept
+    up to date with the sponsor's invoice address."""
+    from hubra.core.contracts import SYSTEM, call
     from hubra.core.models.external_party import ExternalParty
 
-    party = (
-        db.session.get(ExternalParty, s.external_party_id)
-        if s.external_party_id
-        else None
+    known = bool(s.external_party_id) and (
+        db.session.get(ExternalParty, s.external_party_id) is not None
     )
-    if party is None:
-        party = ExternalPartiesService.create(
-            {
-                "name": s.name,
-                "email": s.email,
-                "address_street": s.street,
-                "address_postal_code": s.postal_code,
-                "address_city": s.city,
-                "notes": "Sponsor",
-            },
-            actor,
-        )
-        s.external_party_id = party.id
-    else:
-        # Keep the invoice address up to date with the sponsor.
-        party.name, party.email = s.name, s.email
-        party.address_street, party.address_postal_code = s.street, s.postal_code
-        party.address_city = s.city
-    return party.id
+    address = {
+        "name": s.name,
+        "email": s.email,
+        "address_street": s.street,
+        "address_postal_code": s.postal_code,
+        "address_city": s.city,
+    }
+    if not known:
+        address["notes"] = "Sponsor"
+    party = call(
+        "finance.external_party.save",
+        external_party_id=s.external_party_id if known else None,
+        **address,
+        actor_id=actor,
+        actor=SYSTEM,
+    )
+    s.external_party_id = party["id"]
+    return party["id"]
 
 
 @supporters_bp.post("/sponsors/invoice")
@@ -538,7 +537,7 @@ def _party_for(s: SupportersSponsor, actor: int) -> int:
 def invoice_sponsors():
     """One invoice per sponsor for the year; a sponsor invoiced for that
     year already is left out, so it is safe to press twice."""
-    from hubra.api.finance.services import InvoicesService
+    from hubra.core.contracts import SYSTEM, call
 
     member = get_current_member()
     data = _body()
@@ -568,19 +567,19 @@ def invoice_sponsors():
             continue
         package = packages.get(s.package_id or 0)
         label = f"Sponsoring {year}" + (f" ({package.name})" if package else "")
-        invoice = InvoicesService.create(
-            {
-                "external_party_id": _party_for(s, member.id),
-                "issued": today,
-                "due": due,
-                "amount": amount,
-                "purpose": "other",
-                "description": f"{label}: {s.name}"[:512],
-                "category_id": category,
-            },
-            member.id,
+        invoice = call(
+            "finance.invoice.create",
+            external_party_id=_party_for(s, member.id),
+            issued=today,
+            due=due,
+            amount=amount,
+            purpose="other",
+            description=f"{label}: {s.name}"[:512],
+            category_id=category,
+            actor_id=member.id,
+            actor=SYSTEM,
         )
-        s.last_invoiced_year, s.last_invoice_id = year, invoice.id
+        s.last_invoiced_year, s.last_invoice_id = year, invoice["id"]
         made.append(s.id)
     log_audit(
         member.id,
@@ -789,11 +788,16 @@ def delete_donation(donation_id: int):
             return api_error("DONATION_PAID", "a paid pledge stays for the books", 409)
         if invoice is not None:
             # The pledge was not paid: withdraw its invoice too.
-            from hubra.api.finance.services import InvoiceService
+            from hubra.core.contracts import SYSTEM, call
 
             d.invoice_id = None
             db.session.flush()
-            InvoiceService.delete(invoice.id, member.id)
+            call(
+                "finance.invoice.delete",
+                invoice_id=invoice.id,
+                actor_id=member.id,
+                actor=SYSTEM,
+            )
     if d.transaction_id:
         tx = db.session.get(Transaction, d.transaction_id)
         if tx is not None:
@@ -814,7 +818,7 @@ def delete_donation(donation_id: int):
 @require_member
 def pledge(goal_id: int):
     """A member gives: an invoice to themselves, paid like any other."""
-    from hubra.api.finance.services import InvoicesService
+    from hubra.core.contracts import SYSTEM, call
 
     member = get_current_member()
     goal, err = _open_goal(goal_id)
@@ -825,18 +829,20 @@ def pledge(goal_id: int):
     if amount > Decimal("100000"):
         raise Invalid("amount is out of range")
     today = date.today()
-    invoice = InvoicesService.create(
-        {
-            "member_id": member.id,
-            "issued": today,
-            "due": today + timedelta(days=30),
-            "amount": amount,
-            "purpose": "other",
-            "description": f"Spende: {goal.title}"[:512],
-            "category_id": goal.category_id,
-        },
-        member.id,
+    # A member pledges to themselves; giving needs no invoice right.
+    made = call(
+        "finance.invoice.create",
+        member_id=member.id,
+        issued=today,
+        due=today + timedelta(days=30),
+        amount=amount,
+        purpose="other",
+        description=f"Spende: {goal.title}"[:512],
+        category_id=goal.category_id,
+        actor_id=member.id,
+        actor=SYSTEM,
     )
+    invoice = db.session.get(Invoice, made["id"])
     donation = SupportersDonation(
         goal_id=goal.id,
         member_id=member.id,

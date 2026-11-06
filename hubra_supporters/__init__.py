@@ -52,4 +52,10 @@ module = Module(
         "supporters_goals",
         "supporters_donations",
     ),
+    # Hubra's features it uses, through contracts (docs/contracts.md in hubra).
+    consumes={
+        "finance.invoice.create": ">=1,<2",
+        "finance.invoice.delete": ">=1,<2",
+        "finance.external_party.save": ">=1,<2",
+    },
 )
