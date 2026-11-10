@@ -141,6 +141,13 @@
         "removeLogo": "Remove the logo",
         "showPublic": "Show on the website",
         "deleteTitle": "Delete this sponsor?"
+      },
+      "widget": {
+        "goals": "Fundraising goals",
+        "goalsHint": "Open fundraising goals and how far each one is",
+        "count": "How many",
+        "sponsors": "Sponsors",
+        "sponsorsHint": "Active sponsors and what they give a year"
       }
     }
   },
@@ -286,6 +293,13 @@
         "removeLogo": "Logo entfernen",
         "showPublic": "Auf der Website zeigen",
         "deleteTitle": "Sponsor löschen?"
+      },
+      "widget": {
+        "goals": "Spendenziele",
+        "goalsHint": "Offene Spendenziele und wie weit sie sind",
+        "count": "Wie viele",
+        "sponsors": "Sponsoren",
+        "sponsorsHint": "Aktive Sponsoren und was sie im Jahr geben"
       }
     }
   }

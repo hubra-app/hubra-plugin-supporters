@@ -244,3 +244,49 @@ def test_an_unpaid_pledge_can_be_withdrawn_with_its_invoice(client, db, club):
     assert client.delete(f"{BASE}/donations/{pledge['id']}").status_code == 204
     assert db.session.get(Invoice, pledge["invoiceId"]) is None
     assert client.delete(f"{BASE}/goals/{goal['id']}").status_code == 204
+
+
+# ── Dashboard widgets ───────────────────────────────────────────────────────
+
+
+def test_widgets(db, club):
+    from datetime import timedelta
+    from decimal import Decimal
+
+    from hubra.core import contracts
+    from hubra.core.models.member import Member
+    from hubra_supporters.models import (
+        SupportersDonation,
+        SupportersGoal,
+        SupportersPackage,
+        SupportersSponsor,
+    )
+
+    today = date.today()
+    goal = SupportersGoal(title="Neue Tore", target=Decimal("2000"))
+    db.session.add_all([
+        goal,
+        SupportersGoal(title="Vorbei", target=Decimal("100"), ends_on=today - timedelta(days=1)),
+    ])
+    gold = SupportersPackage(name="Gold", amount=Decimal("1000"))
+    db.session.add(gold)
+    db.session.flush()
+    db.session.add_all([
+        SupportersDonation(goal_id=goal.id, member_id=club["max"], amount=Decimal("500"),
+                           donated_on=today),
+        SupportersSponsor(name="Bäckerei", package_id=gold.id),
+        SupportersSponsor(name="Garage", amount=Decimal("250"), until=today + timedelta(days=30)),
+        SupportersSponsor(name="Früher", amount=Decimal("999"), until=today - timedelta(days=1)),
+    ])
+    db.session.commit()
+
+    max_ = db.session.get(Member, club["max"])
+    out = contracts.widget_data("supporters.goals", {}, actor=max_)
+    assert [i["label"] for i in out["items"]] == ["Neue Tore"]
+    assert out["items"][0]["sub"] == "CHF 500 / CHF 2'000 · 25%"
+
+    stat = contracts.widget_data("supporters.sponsors", {}, actor=contracts.SYSTEM)
+    assert stat["value"] == 2 and stat["sub"].startswith("CHF 1'250 / ")
+
+    offered = [o.contract.name for o in contracts.widgets(actor=max_)]
+    assert "supporters.goals" in offered and "supporters.sponsors" not in offered

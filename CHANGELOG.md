@@ -6,6 +6,7 @@
 
 ## Unreleased
 
+- Dashboard widgets: **Spendenziele** (open goals with raised, target and share) and **Sponsoren** (active sponsors and what they give a year; needs `supporters.sponsors.read`).
 - The sponsors moved into Finanzen, as a page tab of their own
   (`/app/finance/sponsors`). The Supporters page keeps the fundraising goals;
   the old address `/app/supporters/sponsors` opens the new one.
