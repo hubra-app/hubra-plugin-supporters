@@ -21,6 +21,7 @@ Public (for the club website, no sign-in):
     GET /api/v1/app/supporters/public/<club>/logo/<id>   a sponsor's logo
 """
 
+from hubra.core.contracts import WidgetField, widget_contract
 from hubra.core.modules import Blueprint, Module, NavItem
 
 module = Module(
@@ -61,4 +62,25 @@ module = Module(
         "finance.invoice.delete": ">=1,<2",
         "finance.external_party.save": ">=1,<2",
     },
+    # Dashboard widgets (hubra_supporters/widgets.py).
+    provides=(
+        widget_contract(
+            "supporters.goals",
+            "hubra_supporters.widgets:goals",
+            label="supporters.widget.goals",
+            description="supporters.widget.goalsHint",
+            size="m",
+            view="list",
+            fields=(WidgetField("count", "supporters.widget.count", "number", 3),),
+        ),
+        widget_contract(
+            "supporters.sponsors",
+            "hubra_supporters.widgets:sponsors",
+            label="supporters.widget.sponsors",
+            description="supporters.widget.sponsorsHint",
+            size="s",
+            view="stat",
+            perm="supporters.sponsors.read",
+        ),
+    ),
 )
