@@ -3,9 +3,6 @@
 ## 1.1.0
 
 - Gives the standard roles access when a club first switches it on (`role_defaults`, docs/roles.md in hubra-app/hubra): Mitglied Ansehen, Vorstand Ansehen, Aktuar/in Bearbeiten, Kassier/in Alles. Roles without access don't see it; their own data from it stays on their profile. Needs Hubra 0.2.5 or later.
-
-## Unreleased
-
 - Dashboard widgets: **Spendenziele** (open goals with raised, target and share) and **Sponsoren** (active sponsors and what they give a year; needs `supporters.sponsors.read`).
 - The sponsors moved into Finanzen, as a page tab of their own
   (`/app/finance/sponsors`). The Supporters page keeps the fundraising goals;
