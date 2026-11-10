@@ -14,7 +14,7 @@
     },
     "supporters": {
       "title": "Supporters",
-      "desc": "Fundraising goals for projects, and the club's sponsors.",
+      "desc": "Fundraising goals for the club's projects. The sponsors are under Finances.",
       "tabs": {
         "goals": "Fundraising",
         "sponsors": "Sponsors"
@@ -158,8 +158,8 @@
       }
     },
     "supporters": {
-      "title": "Gönner & Sponsoren",
-      "desc": "Spendenziele für Projekte und die Sponsoren des Vereins.",
+      "title": "Gönner & Spenden",
+      "desc": "Spendenziele für die Projekte des Vereins. Die Sponsoren findest du unter Finanzen.",
       "tabs": {
         "goals": "Spendenziele",
         "sponsors": "Sponsoren"

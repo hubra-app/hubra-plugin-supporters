@@ -25,6 +25,9 @@ from hubra.core.modules import Blueprint, Module, NavItem
 
 module = Module(
     code="supporters",
+    # Access the standard roles get when a club first switches it on
+    # (docs/roles.md in hubra-app/hubra).
+    role_defaults={"member": "view", "board": "view", "secretary": "edit", "treasurer": "all"},
     name="Supporters",
     description="Sponsors and fundraising goals",
     default_enabled=False,
