@@ -44,17 +44,14 @@ function Logo({ sponsor }: { sponsor: Sponsor }) {
   const [src, setSrc] = useState<string | null>(null)
   useEffect(() => {
     if (!sponsor.hasLogo) return setSrc(null)
-    let url: string | null = null
     let alive = true
     logoUrl(sponsor.id)
       .then((u) => {
-        url = u
         if (alive) setSrc(u)
       })
       .catch(() => setSrc(null))
     return () => {
       alive = false
-      if (url) URL.revokeObjectURL(url)
     }
   }, [sponsor.id, sponsor.hasLogo])
   return (
@@ -88,6 +85,7 @@ export function SponsorsTab({ options }: { options: Options | undefined }) {
   const [packagesOpen, setPackagesOpen] = useState(false)
   const { run } = useAction()
   const canEdit = !!options?.can.sponsors
+  const canInvoice = !!options?.can.invoice
   const refresh = () => qc.invalidateQueries({ queryKey: QK.all })
   const year = new Date().getFullYear()
   const active = (sponsors.data ?? []).filter((s) => s.active)
@@ -105,9 +103,11 @@ export function SponsorsTab({ options }: { options: Options | undefined }) {
             <Button variant="default" onClick={() => setPackagesOpen(true)}>
               {t('supporters.packages.title')}
             </Button>
-            <Button variant="default" leftSection={<IconReceipt2 size={16} />} disabled={!due.length} onClick={() => setInvoicing(true)}>
-              {t('supporters.sponsors.invoice', { year })}
-            </Button>
+            {canInvoice && (
+              <Button variant="default" leftSection={<IconReceipt2 size={16} />} disabled={!due.length} onClick={() => setInvoicing(true)}>
+                {t('supporters.sponsors.invoice', { year })}
+              </Button>
+            )}
             <Button leftSection={<IconPlus size={16} />} onClick={() => setForm('new')}>
               {t('supporters.sponsors.new')}
             </Button>
@@ -250,7 +250,7 @@ function SponsorModal({ sponsor, packages, onClose, onDone }: { sponsor: Sponsor
   })
   const [packageId, setPackageId] = useState<number | null>(sponsor?.packageId ?? packages[0]?.id ?? null)
   const [amount, setAmount] = useState<number | string>(sponsor?.amount ?? '')
-  const [showPublic, setShowPublic] = useState(sponsor?.showPublic ?? true)
+  const [showPublic, setShowPublic] = useState(sponsor?.showPublic ?? false)
   const [logo, setLogo] = useState<File | null>(null)
   const set = (key: keyof typeof v, value: string) => setV((old) => ({ ...old, [key]: value }))
 

@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Donation, goal and sponsor amounts use the app's money field (CHF prefix, 2 decimals, no arrows).
+- Security: with only `supporters.sponsors.read` (every member's "Ansehen" level) the sponsor list leaves out contact person, e-mail, phone, address and notes; those need `supporters.sponsors.update`.
+- Security: a logo must really be the image type it claims; a sponsor's website can't hold spaces, quotes or angle brackets; logos show from a data: URL, so an SVG opened in its own tab can't run as the app.
+- Security: invoicing sponsors locks them until done, so two presses at once can't invoice a year twice; deleting a donation logs the deleted booking in the audit log.
 
 ## 1.1.0
 
