@@ -44,17 +44,14 @@ function Logo({ sponsor }: { sponsor: Sponsor }) {
   const [src, setSrc] = useState<string | null>(null)
   useEffect(() => {
     if (!sponsor.hasLogo) return setSrc(null)
-    let url: string | null = null
     let alive = true
     logoUrl(sponsor.id)
       .then((u) => {
-        url = u
         if (alive) setSrc(u)
       })
       .catch(() => setSrc(null))
     return () => {
       alive = false
-      if (url) URL.revokeObjectURL(url)
     }
   }, [sponsor.id, sponsor.hasLogo])
   return (

@@ -85,7 +85,12 @@ def _website(data) -> str | None:
     value = _text(data, "website", 300)
     if value and not value.startswith(("https://", "http://")):
         value = "https://" + value
-    if value and (" " in value or "." not in value):
+    # It goes out on the public endpoint, where club websites put it in an
+    # href: no spaces, quotes or angle brackets that could break out of one.
+    if value and (
+        "." not in value
+        or any(c.isspace() or c in '"<>`\\' or ord(c) < 32 for c in value)
+    ):
         raise Invalid("website is not an address")
     return value
 
@@ -116,9 +121,27 @@ def _active(s: SupportersSponsor, today: date) -> bool:
     )
 
 
-def _sponsor(s: SupportersSponsor, packages: dict, today: date) -> dict:
+# Contact and invoice details of a sponsor. Only those who look after the
+# sponsors (supporters.sponsors.update) get them; supporters.sponsors.read
+# comes with the "Ansehen" level every member has by default, so a reader
+# sees what the club shows anyway (name, package, amount, website, logo).
+CONTACT_FIELDS = (
+    "contactName",
+    "email",
+    "phone",
+    "street",
+    "postalCode",
+    "city",
+    "notes",
+    "lastInvoiceId",
+)
+
+
+def _sponsor(
+    s: SupportersSponsor, packages: dict, today: date, full: bool = True
+) -> dict:
     p = packages.get(s.package_id or 0)
-    return {
+    out = {
         "id": s.id,
         "name": s.name,
         "contactName": s.contact_name,
@@ -141,6 +164,10 @@ def _sponsor(s: SupportersSponsor, packages: dict, today: date) -> dict:
         "lastInvoicedYear": s.last_invoiced_year,
         "lastInvoiceId": s.last_invoice_id,
     }
+    if not full:
+        for key in CONTACT_FIELDS:
+            out.pop(key)
+    return out
 
 
 def _counted(d: SupportersDonation, paid: set[int]) -> bool:
@@ -334,8 +361,9 @@ def _packages() -> dict[int, SupportersPackage]:
 def list_sponsors():
     packages = _packages()
     today = date.today()
+    full = _can(get_current_member(), SPONSORS)
     rows = list(db.session.scalars(select(SupportersSponsor)))
-    out = [_sponsor(s, packages, today) for s in rows]
+    out = [_sponsor(s, packages, today, full) for s in rows]
     out.sort(key=lambda s: (not s["active"], -(s["yearly"] or 0), s["name"].lower()))
     return jsonify(out)
 
@@ -405,6 +433,22 @@ def update_sponsor(sponsor_id: int):
     return jsonify(_sponsor(s, _packages(), date.today()))
 
 
+def _looks_like(blob: bytes, kind: str) -> bool:
+    """The file is what its type says (the type comes from the browser)."""
+    if kind == "image/png":
+        return blob.startswith(b"\x89PNG\r\n\x1a\n")
+    if kind == "image/jpeg":
+        return blob.startswith(b"\xff\xd8\xff")
+    if kind == "image/gif":
+        return blob.startswith((b"GIF87a", b"GIF89a"))
+    if kind == "image/webp":
+        return blob[:4] == b"RIFF" and blob[8:12] == b"WEBP"
+    if kind == "image/svg+xml":
+        head = blob[:2048].lstrip(b"\xef\xbb\xbf \t\r\n").lower()
+        return head.startswith((b"<svg", b"<?xml", b"<!--", b"<!doctype svg"))
+    return False
+
+
 def _drop_logo(s: SupportersSponsor) -> None:
     if s.logo_key:
         try:
@@ -442,7 +486,7 @@ def put_logo(sponsor_id: int):
     kind = (upload.mimetype or "").lower()
     if not blob:
         raise Invalid("the logo is empty")
-    if kind not in LOGO_TYPES:
+    if kind not in LOGO_TYPES or not _looks_like(blob, kind):
         raise Invalid("the logo must be a PNG, JPEG, WebP, GIF or SVG image")
     if len(blob) > 2 * 1024 * 1024:
         return api_error("FILE_TOO_LARGE", "a logo can be at most 2 MB", 413)
@@ -553,7 +597,11 @@ def invoice_sponsors():
     category = _category_id(data)
     packages = _packages()
     made, skipped = [], []
-    query = select(SupportersSponsor).order_by(SupportersSponsor.name)
+    # Locked until the commit: two presses at once wait for each other, and
+    # the second sees the year as invoiced instead of invoicing it again.
+    query = (
+        select(SupportersSponsor).order_by(SupportersSponsor.name).with_for_update()
+    )
     if ids is not None:
         query = query.where(SupportersSponsor.id.in_(ids))
     for s in db.session.scalars(query):
@@ -725,7 +773,6 @@ def _open_goal(goal_id: int):
 def record_donation(goal_id: int):
     """A donation that came in (bank, cash, Twint): booked as income now."""
     from hubra.core.models.finance import Transaction
-    from hubra.core.utils import log_audit
 
     member = get_current_member()
     goal, err = _get(SupportersGoal, goal_id)
@@ -801,6 +848,9 @@ def delete_donation(donation_id: int):
     if d.transaction_id:
         tx = db.session.get(Transaction, d.transaction_id)
         if tx is not None:
+            log_audit(
+                member.id, "delete_transaction", "Transaction", tx.id, tx.description
+            )
             db.session.delete(tx)
     log_audit(
         member.id,

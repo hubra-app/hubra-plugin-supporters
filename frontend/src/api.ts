@@ -105,9 +105,18 @@ export async function uploadLogo(id: number, file: File) {
   return (await res.json()) as Sponsor
 }
 export const removeLogo = (id: number) => apiFetch<Sponsor>(`${BASE}/sponsors/${id}/logo`, { method: 'DELETE' })
+// A data: URL, not a blob: one. A blob: URL belongs to the app's origin, so
+// an SVG logo opened from it in a tab of its own ("Open image in new tab")
+// would run its script as the app. Browsers don't open data: URLs as pages.
 export async function logoUrl(id: number) {
   const res = await apiFetchRaw(`${BASE}/sponsors/${id}/logo`)
-  return URL.createObjectURL(await res.blob())
+  const blob = await res.blob()
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(blob)
+  })
 }
 export const invoiceSponsors = (body: { year: number; sponsorIds?: number[]; categoryId?: number | null; dueDays?: number }) =>
   apiFetch<{ invoiced: number[]; skipped: number[]; year: number }>(`${BASE}/sponsors/invoice`, json('POST', body))
