@@ -169,7 +169,7 @@ export function GoalModal({
       </Field>
       <Group grow align="flex-start">
         <Field label={t('supporters.goals.target')}>
-          <NumberInput value={target} onChange={setTarget} min={1} thousandSeparator="'" leftSection="CHF" leftSectionWidth={44} />
+          <NumberInput value={target} onChange={setTarget} min={1} decimalScale={2} thousandSeparator="’" prefix="CHF " hideControls />
         </Field>
         <Field label={t('supporters.goals.endsOn')} hint={t('supporters.goals.endsOnHint')}>
           <TextInput type="date" value={endsOn} onChange={(e) => setEndsOn(e.currentTarget.value)} />

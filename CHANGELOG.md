@@ -1,5 +1,9 @@
 # Supporters
 
+## Unreleased
+
+- Donation, goal and sponsor amounts use the app's money field (CHF prefix, 2 decimals, no arrows).
+
 ## 1.1.0
 
 - Gives the standard roles access when a club first switches it on (`role_defaults`, docs/roles.md in hubra-app/hubra): Mitglied Ansehen, Vorstand Ansehen, Aktuar/in Bearbeiten, Kassier/in Alles. Roles without access don't see it; their own data from it stays on their profile. Needs Hubra 0.2.5 or later.

@@ -237,7 +237,7 @@ function GiveModal({ goal, onClose, onDone }: { goal: Goal; onClose: () => void;
         ))}
       </SimpleGrid>
       <Field label={t('supporters.goals.otherAmount')}>
-        <NumberInput value={amount} onChange={setAmount} min={1} max={100000} leftSection="CHF" leftSectionWidth={44} />
+        <NumberInput value={amount} onChange={setAmount} min={1} max={100000} decimalScale={2} thousandSeparator="’" prefix="CHF " hideControls />
       </Field>
       <Field label={t('supporters.goals.message')}>
         <TextInput value={message} onChange={(e) => setMessage(e.currentTarget.value)} maxLength={500} />
@@ -294,7 +294,7 @@ function RecordModal({ goal, onClose, onDone }: { goal: Goal; onClose: () => voi
       </Group>
       <Group grow align="flex-start">
         <Field label={t('supporters.amount')}>
-          <NumberInput value={amount} onChange={setAmount} min={1} leftSection="CHF" leftSectionWidth={44} />
+          <NumberInput value={amount} onChange={setAmount} min={1} decimalScale={2} thousandSeparator="’" prefix="CHF " hideControls />
         </Field>
         <Field label={t('supporters.goals.donatedOn')}>
           <TextInput type="date" value={donatedOn} onChange={(e) => setDonatedOn(e.currentTarget.value)} />
