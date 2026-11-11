@@ -306,7 +306,7 @@ function SponsorModal({ sponsor, packages, onClose, onDone }: { sponsor: Sponsor
           />
         </Field>
         <Field label={t('supporters.sponsors.ownAmount')} hint={t('supporters.sponsors.ownAmountHint')}>
-          <NumberInput value={amount} onChange={setAmount} min={0} leftSection="CHF" leftSectionWidth={44} />
+          <NumberInput value={amount} onChange={setAmount} min={0} decimalScale={2} thousandSeparator="’" prefix="CHF " hideControls />
         </Field>
       </Group>
       <Group grow align="flex-start">
@@ -463,7 +463,7 @@ function PackagesModal({ packages, onClose, onDone }: { packages: Package[]; onC
               <TextInput value={name} onChange={(e) => setName(e.currentTarget.value)} placeholder={t('supporters.packages.example')} />
             </Field>
             <Field label={t('supporters.packages.amount')}>
-              <NumberInput value={amount} onChange={setAmount} min={0} leftSection="CHF" leftSectionWidth={44} />
+              <NumberInput value={amount} onChange={setAmount} min={0} decimalScale={2} thousandSeparator="’" prefix="CHF " hideControls />
             </Field>
           </Group>
           <Field label={t('supporters.packages.benefits')}>
