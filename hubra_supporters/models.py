@@ -59,7 +59,8 @@ class SupportersSponsor(db.Model):
     amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     since: Mapped[date | None] = mapped_column(Date)
     until: Mapped[date | None] = mapped_column(Date)
-    show_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Hidden until the club says so: a sponsor may be a private person.
+    show_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     logo_key: Mapped[str | None] = mapped_column(String(120))
     logo_type: Mapped[str | None] = mapped_column(String(100))
     notes: Mapped[str | None] = mapped_column(Text)

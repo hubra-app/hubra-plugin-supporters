@@ -1,7 +1,7 @@
 import { apiFetch, apiFetchRaw } from '@hubra/plugin-sdk'
 
 export interface Options {
-  can: { sponsorsRead: boolean; sponsors: boolean; goals: boolean }
+  can: { sponsorsRead: boolean; sponsors: boolean; goals: boolean; amounts: boolean; book: boolean; invoice: boolean }
   memberId: number
   publicUrl?: string
   categories?: { id: number; name: string }[]
@@ -43,7 +43,8 @@ export interface Donation {
   id: number
   name: string | null
   anonymous: boolean
-  amount: number
+  // Left out for others' donations unless the caller may see amounts.
+  amount?: number
   donatedOn: string
   message: string | null
   counted: boolean

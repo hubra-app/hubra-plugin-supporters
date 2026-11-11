@@ -21,6 +21,8 @@ STAFF = [
     "supporters.sponsors.read",
     "supporters.sponsors.update",
     "supporters.goals.update",
+    "supporters.bookings.manage",
+    "supporters.invoices.manage",
 ]
 PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 64
 
@@ -119,12 +121,14 @@ def test_sponsors_are_invoiced_once_a_year(client, db, club):
 def test_the_website_sees_shown_sponsors_with_logos(client, db, club):
     _login(client, "kim@test.ch")
     shown = client.post(
-        f"{BASE}/sponsors", json={"name": "Garage Muster AG", "amount": "500"}
-    ).get_json()
-    hidden = client.post(
         f"{BASE}/sponsors",
-        json={"name": "Stiller Gönner", "amount": "50", "showPublic": False},
+        json={"name": "Garage Muster AG", "amount": "500", "showPublic": True},
     ).get_json()
+    # Hidden unless the club shows it: a sponsor may be a private person.
+    hidden = client.post(
+        f"{BASE}/sponsors", json={"name": "Stiller Gönner", "amount": "50"}
+    ).get_json()
+    assert hidden["showPublic"] is False
     bad = client.put(
         f"{BASE}/sponsors/{shown['id']}/logo",
         data={"logo": (io.BytesIO(b"<html>"), "x.html", "text/html")},
@@ -378,3 +382,83 @@ def test_members_cannot_run_goals_or_book_donations(client, db, club):
     # What a member sees of others' donations leaves out the books' links.
     seen = client.get(f"{BASE}/goals/{goal['id']}").get_json()["donations"][0]
     assert "transactionId" not in seen and "memberId" not in seen
+
+
+def test_money_needs_a_finance_or_supporters_right(client, db, club, seeded_db):
+    """Running goals and sponsors ("Bearbeiten") doesn't book income or send
+    invoices; that takes a finance right or the plugin's own manage key."""
+    tier = seeded_db["tier"]
+    _make_role_and_member(
+        db,
+        tier,
+        name="Sek",
+        permission_keys=["supporters.goals.update", "supporters.sponsors.update"],
+    )
+    _make_role_and_member(
+        db,
+        tier,
+        name="Fin",
+        permission_keys=[
+            "supporters.goals.update",
+            "supporters.sponsors.update",
+            "finance.transactions.create",
+            "finance.invoices.create",
+        ],
+    )
+    _login(client, "kim@test.ch")
+    goal = client.post(
+        f"{BASE}/goals", json={"title": "Boot", "target": "1000", "categoryId": club["cat"]}
+    ).get_json()
+    d = client.post(
+        f"{BASE}/goals/{goal['id']}/donations", json={"amount": "50", "name": "Anna"}
+    ).get_json()
+    client.post(f"{BASE}/sponsors", json={"name": "A", "amount": "100"})
+
+    _login(client, "sek@test.ch")
+    can = client.get(f"{BASE}/options").get_json()["can"]
+    assert can["goals"] and not can["book"] and not can["invoice"]
+    assert (
+        client.post(
+            f"{BASE}/goals/{goal['id']}/donations", json={"amount": "5", "name": "X"}
+        ).status_code
+        == 403
+    )
+    assert client.delete(f"{BASE}/donations/{d['id']}").status_code == 403
+    assert client.post(f"{BASE}/sponsors/invoice", json={}).status_code == 403
+
+    _login(client, "fin@test.ch")
+    assert (
+        client.post(
+            f"{BASE}/goals/{goal['id']}/donations", json={"amount": "5", "name": "X"}
+        ).status_code
+        == 201
+    )
+    assert client.post(f"{BASE}/sponsors/invoice", json={}).get_json()["invoiced"]
+
+
+def test_members_see_donors_but_not_what_others_gave(client, db, club, seeded_db):
+    _make_role_and_member(
+        db,
+        seeded_db["tier"],
+        name="Rev",
+        permission_keys=["supporters.donations.read_amounts"],
+    )
+    _login(client, "kim@test.ch")
+    goal = client.post(
+        f"{BASE}/goals", json={"title": "Boot", "target": "1000"}
+    ).get_json()
+    client.post(
+        f"{BASE}/goals/{goal['id']}/donations", json={"amount": "50", "name": "Anna"}
+    )
+    _login(client, "max@test.ch")
+    client.post(f"{BASE}/goals/{goal['id']}/pledge", json={"amount": "20"})
+    seen = client.get(f"{BASE}/goals/{goal['id']}").get_json()
+    anna = next(x for x in seen["donations"] if x["name"] == "Anna")
+    assert "amount" not in anna
+    own = next(x for x in seen["donations"] if x["name"] != "Anna")
+    assert own["amount"] == 20.0
+    assert seen["raised"] == 50.0
+
+    _login(client, "rev@test.ch")
+    seen = client.get(f"{BASE}/goals/{goal['id']}").get_json()
+    assert all("amount" in x for x in seen["donations"])

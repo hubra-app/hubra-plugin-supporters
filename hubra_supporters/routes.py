@@ -72,8 +72,24 @@ OWNER = "supporters"
 SPONSORS_READ = "supporters.sponsors.read"
 SPONSORS = "supporters.sponsors.update"
 GOALS = "supporters.goals.update"
+# Money rights: the plugin's own key, or the matching finance right.
+AMOUNTS = ("supporters.donations.read_amounts", "finance.transactions.read")
+BOOK = ("supporters.bookings.manage", "finance.transactions.create")
+INVOICE = ("supporters.invoices.manage", "finance.invoices.create")
 LOGO_TYPES = ("image/png", "image/jpeg", "image/webp", "image/svg+xml", "image/gif")
 METHODS = ("IBAN", "Cash", "Twint", "Card")
+
+
+def _can_any(member, keys) -> bool:
+    return any(_can(member, k) for k in keys)
+
+
+def _money_refused(what: str):
+    return api_error(
+        "FORBIDDEN",
+        f"{what} needs a finance right or the Supporters right for it",
+        403,
+    )
 
 
 @supporters_bp.errorhandler(Invalid)
@@ -217,7 +233,13 @@ def _donor_name(d: SupportersDonation, names: dict, full: bool) -> str | None:
     return d.name or names.get(d.member_id or 0)
 
 
-def _donation(d: SupportersDonation, names: dict, paid: set[int], full: bool) -> dict:
+def _donation(
+    d: SupportersDonation,
+    names: dict,
+    paid: set[int],
+    full: bool,
+    amounts: bool = True,
+) -> dict:
     out = {
         "id": d.id,
         "name": _donor_name(d, names, full),
@@ -228,6 +250,8 @@ def _donation(d: SupportersDonation, names: dict, paid: set[int], full: bool) ->
         "counted": _counted(d, paid),
         "pledge": d.invoice_id is not None,
     }
+    if not amounts:
+        out.pop("amount")
     if full:
         out.update(
             memberId=d.member_id,
@@ -263,6 +287,9 @@ def options():
         "sponsorsRead": _can(member, SPONSORS_READ) or _can(member, SPONSORS),
         "sponsors": _can(member, SPONSORS),
         "goals": _can(member, GOALS),
+        "amounts": _can(member, GOALS) or _can_any(member, AMOUNTS),
+        "book": _can_any(member, BOOK),
+        "invoice": _can_any(member, INVOICE),
     }
     out = {"can": can, "memberId": member.id}
     tenant = current_tenant()
@@ -413,7 +440,7 @@ def _apply_sponsor(s: SupportersSponsor, data: dict, partial: bool) -> None:
 @permission_required("sponsors", "update", "Add and change sponsors, invoice them")
 def create_sponsor():
     member = get_current_member()
-    s = SupportersSponsor(show_public=True)
+    s = SupportersSponsor(show_public=False)
     _apply_sponsor(s, _body(), partial=False)
     db.session.add(s)
     db.session.flush()
@@ -584,6 +611,8 @@ def invoice_sponsors():
     from hubra.core.contracts import SYSTEM, call
 
     member = get_current_member()
+    if not _can_any(member, INVOICE):
+        return _money_refused("Invoicing sponsors")
     data = _body()
     today = date.today()
     year = _int(data, "year", 2000, 2100, today.year)
@@ -697,6 +726,7 @@ def get_goal(goal_id: int):
     if err:
         return err
     full = _can(member, GOALS)
+    amounts = full or _can_any(member, AMOUNTS)
     donations = _donations_of([goal.id])[goal.id]
     paid = _paid_invoices(d.invoice_id for d in donations)
     names = _names(d.member_id for d in donations)
@@ -706,7 +736,12 @@ def get_goal(goal_id: int):
         if full
         else [d for d in donations if _counted(d, paid) or d.member_id == member.id]
     )
-    out["donations"] = [_donation(d, names, paid, full) for d in shown]
+    # What each one gave only for those who run goals or see the money;
+    # a member sees their own amounts (and in "mine").
+    out["donations"] = [
+        _donation(d, names, paid, full, amounts or d.member_id == member.id)
+        for d in shown
+    ]
     out["mine"] = [
         _donation(d, names, paid, True) for d in donations if d.member_id == member.id
     ]
@@ -775,6 +810,8 @@ def record_donation(goal_id: int):
     from hubra.core.models.finance import Transaction
 
     member = get_current_member()
+    if not _can_any(member, BOOK):
+        return _money_refused("Recording a donation")
     goal, err = _get(SupportersGoal, goal_id)
     if err:
         return err
@@ -826,6 +863,8 @@ def delete_donation(donation_id: int):
     from hubra.core.models.finance import Transaction
 
     member = get_current_member()
+    if not _can_any(member, BOOK):
+        return _money_refused("Deleting a donation")
     d, err = _get(SupportersDonation, donation_id)
     if err:
         return err

@@ -12,9 +12,18 @@
 Logos sit in Hubra's file store, encrypted per club.
 
 Permissions:
-    supporters.sponsors.read      see sponsors and packages
-    supporters.sponsors.update    add and change them, invoice them
-    supporters.goals.update       run fundraising goals and record donations
+    supporters.sponsors.read      see sponsors and packages (no contact details)
+    supporters.sponsors.update    add and change them, with contact details
+    supporters.goals.update       run fundraising goals
+    supporters.donations.read_amounts  see what each donor gave
+                                  (or finance.transactions.read)
+    supporters.bookings.manage    record and delete donations, which books
+                                  income (or finance.transactions.create)
+    supporters.invoices.manage    invoice sponsors for the year
+                                  (or finance.invoices.create)
+
+"manage" is in no role's "Bearbeiten" level: booking money and invoicing
+take a finance right or one of these, given on purpose.
 
 Public (for the club website, no sign-in):
     GET /api/v1/app/supporters/public/<club>             sponsors and goals
@@ -49,6 +58,11 @@ module = Module(
     public_endpoints=(
         "supporters_bp.public_page",
         "supporters_bp.public_logo",
+    ),
+    permissions=(
+        ("supporters.donations.read_amounts", "See what each donor gave"),
+        ("supporters.bookings.manage", "Record and delete donations (books income)"),
+        ("supporters.invoices.manage", "Invoice sponsors"),
     ),
     tables=(
         "supporters_packages",

@@ -37,6 +37,7 @@ export function GoalScreen() {
   const [dropping, setDropping] = useState<Donation | null>(null)
   const { busy, run } = useAction()
   const manage = !!options.data?.can.goals
+  const book = !!options.data?.can.book
   const g = goal.data
   const refresh = () => qc.invalidateQueries({ queryKey: QK.all })
 
@@ -104,9 +105,11 @@ export function GoalScreen() {
             <Title order={4}>{t('supporters.goals.donations')}</Title>
             {manage && (
               <Group gap="xs">
-                <Button variant="light" leftSection={<IconPlus size={16} />} onClick={() => setRecording(true)}>
-                  {t('supporters.goals.record')}
-                </Button>
+                {book && (
+                  <Button variant="light" leftSection={<IconPlus size={16} />} onClick={() => setRecording(true)}>
+                    {t('supporters.goals.record')}
+                  </Button>
+                )}
                 <Button
                   variant="default"
                   leftSection={g.closed ? <IconLockOpen size={16} /> : <IconLock size={16} />}
@@ -148,10 +151,12 @@ export function GoalScreen() {
                     </Text>
                   </div>
                   <Group gap={4} wrap="nowrap">
-                    <Text size="sm" style={{ whiteSpace: 'nowrap' }}>
-                      {chf(d.amount)}
-                    </Text>
-                    {manage && (
+                    {d.amount != null && (
+                      <Text size="sm" style={{ whiteSpace: 'nowrap' }}>
+                        {chf(d.amount)}
+                      </Text>
+                    )}
+                    {manage && book && (
                       <ActionIcon variant="subtle" color="red" size="sm" aria-label={t('supporters.delete')} onClick={() => setDropping(d)}>
                         <IconTrash size={14} />
                       </ActionIcon>
@@ -170,7 +175,7 @@ export function GoalScreen() {
       <ConfirmModal
         open={!!dropping}
         title={t('supporters.goals.deleteDonation')}
-        body={dropping ? `${dropping.name ?? t('supporters.goals.anonymous')} · ${chf(dropping.amount)}` : ''}
+        body={dropping ? `${dropping.name ?? t('supporters.goals.anonymous')} · ${chf(dropping.amount ?? 0)}` : ''}
         confirmLabel={t('supporters.delete')}
         onClose={() => setDropping(null)}
         onConfirm={async () => {

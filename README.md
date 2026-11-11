@@ -12,7 +12,7 @@ A plugin for [Hubra](https://hubra.club). Sponsors and fundraising: sponsor pack
 
 | Page | |
 | --- | --- |
-| Spendenziele | A goal with a target amount, an optional end date and a finance category. The treasurer records donations (each books an income in Finanzen). Members pledge an amount: that creates an invoice to themselves, and the pledge counts once the invoice is paid. Donors can stay anonymous to other members. |
+| Spendenziele | A goal with a target amount, an optional end date and a finance category. The treasurer records donations (each books an income in Finanzen). Members pledge an amount: that creates an invoice to themselves, and the pledge counts once the invoice is paid. Donors can stay anonymous to other members, and members never see what others gave. Recording donations needs a finance right or `supporters.bookings.manage`. |
 | Sponsoren (in Finanzen, `/app/finance/sponsors`) | Sponsors with contact, address, a package (Gold, Silber …) or their own amount, a term and a logo. "Rechnungen erstellen" invoices every sponsor active in a year once, as an external party, so pressing it twice invoices nobody twice. |
 
 The club website can read shown sponsors (with logos) and open public goals
