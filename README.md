@@ -1,6 +1,6 @@
 # Supporters
 
-[![Test and release](https://github.com/hubra-app/hubra-plugin-supporters/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/hubra-app/hubra-plugin-supporters/actions/workflows/release.yml?query=branch%3Amain) [![Release](https://img.shields.io/github/v/release/hubra-app/hubra-plugin-supporters)](https://github.com/hubra-app/hubra-plugin-supporters/releases/latest) [![License: all rights reserved](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)](LICENSE)
+[![Test and release](https://github.com/hubra-app/hubra-plugin-supporters/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/hubra-app/hubra-plugin-supporters/actions/workflows/release.yml?query=branch%3Amain) [![Release](https://img.shields.io/github/v/release/hubra-app/hubra-plugin-supporters)](https://github.com/hubra-app/hubra-plugin-supporters/releases/latest) [![License: all rights reserved](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)](LICENSE) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-bitsandbricks-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/bitsandbricks)
 
 A plugin for [Hubra](https://hubra.club). Sponsors and fundraising: sponsor packages, yearly sponsor invoices and logos for the club website, and fundraising goals with a progress bar, recorded donations and member pledges.
 
