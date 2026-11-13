@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ActionIcon, Anchor, Badge, Button, Checkbox, Group, NumberInput, Paper, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core'
 import { IconArrowLeft, IconHeartHandshake, IconLock, IconLockOpen, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react'
-import { ConfirmModal, ErrorBanner, Field, LoadingSpinner, MarkdownRenderer, MemberPicker, Modal, PageHead, useT } from '@hubra/plugin-sdk'
+import { ConfirmModal, DateField, ErrorBanner, Field, LoadingSpinner, MarkdownRenderer, MemberPicker, Modal, PageHead, useT } from '@hubra/plugin-sdk'
 import {
   QK,
   closeGoal,
@@ -302,7 +302,7 @@ function RecordModal({ goal, onClose, onDone }: { goal: Goal; onClose: () => voi
           <NumberInput value={amount} onChange={setAmount} min={1} decimalScale={2} thousandSeparator="’" prefix="CHF " hideControls />
         </Field>
         <Field label={t('supporters.goals.donatedOn')}>
-          <TextInput type="date" value={donatedOn} onChange={(e) => setDonatedOn(e.currentTarget.value)} />
+          <DateField value={donatedOn} onChange={setDonatedOn} />
         </Field>
         <Field label={t('supporters.goals.method')}>
           <Select
