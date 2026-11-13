@@ -4,7 +4,7 @@
 
 A plugin for [Hubra](https://hubra.club). Sponsors and fundraising: sponsor packages, yearly sponsor invoices and logos for the club website, and fundraising goals with a progress bar, recorded donations and member pledges.
 
-**Version** 1.0.0 · **Works with** Hubra >=0.2,<1 · **Plugin id** `supporters` · **Needs** the members and finance modules, and Hubra's file store for logos
+**Version** 1.1.1 · **Works with** Hubra >=0.2.5,<1 · **Plugin id** `supporters` · **Needs** the members and finance modules, and Hubra's file store for logos
 
 ![Goal](docs/screenshots/goal.png)
 
