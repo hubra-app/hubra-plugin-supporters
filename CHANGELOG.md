@@ -1,6 +1,6 @@
 # Supporters
 
-## Unreleased
+## 1.1.1
 
 - Donation, goal and sponsor amounts use the app's money field (CHF prefix, 2 decimals, no arrows).
 - Security: with only `supporters.sponsors.read` (every member's "Ansehen" level) the sponsor list leaves out contact person, e-mail, phone, address and notes; those need `supporters.sponsors.update`.
