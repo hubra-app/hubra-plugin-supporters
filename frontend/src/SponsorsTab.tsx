@@ -19,7 +19,7 @@ import {
   Title,
 } from '@mantine/core'
 import { IconCheck, IconCopy, IconPencil, IconPhoto, IconPlus, IconReceipt2, IconTrash, IconWorld } from '@tabler/icons-react'
-import { ConfirmModal, EmptyState, ErrorBanner, Field, LoadingSpinner, Modal, useT } from '@hubra/plugin-sdk'
+import { ConfirmModal, DateField, EmptyState, ErrorBanner, Field, LoadingSpinner, Modal, useT } from '@hubra/plugin-sdk'
 import {
   QK,
   deletePackage,
@@ -311,10 +311,10 @@ function SponsorModal({ sponsor, packages, onClose, onDone }: { sponsor: Sponsor
       </Group>
       <Group grow align="flex-start">
         <Field label={t('supporters.sponsors.since')}>
-          <TextInput type="date" value={v.since} onChange={(e) => set('since', e.currentTarget.value)} />
+          <DateField value={v.since} onChange={(val) => set('since', val)} />
         </Field>
         <Field label={t('supporters.sponsors.untilField')}>
-          <TextInput type="date" value={v.until} onChange={(e) => set('until', e.currentTarget.value)} />
+          <DateField value={v.until} onChange={(val) => set('until', val)} />
         </Field>
       </Group>
       <Group grow align="flex-start">
