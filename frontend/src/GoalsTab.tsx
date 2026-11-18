@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Badge, Button, Group, NumberInput, Paper, Progress, SimpleGrid, Stack, Switch, Text, TextInput, Textarea } from '@mantine/core'
 import { IconPlus, IconTargetArrow } from '@tabler/icons-react'
-import { EmptyState, ErrorBanner, Field, LoadingSpinner, Modal, useT } from '@hubra/plugin-sdk'
+import { DateField, EmptyState, ErrorBanner, Field, LoadingSpinner, Modal, useT } from '@hubra/plugin-sdk'
 import { QK, errorText, formatDay, listGoals, saveGoal, type Goal, type Options } from './api'
 import { CategoryField, chf, useAction } from './common'
 
@@ -172,7 +172,7 @@ export function GoalModal({
           <NumberInput value={target} onChange={setTarget} min={1} decimalScale={2} thousandSeparator="’" prefix="CHF " hideControls />
         </Field>
         <Field label={t('supporters.goals.endsOn')} hint={t('supporters.goals.endsOnHint')}>
-          <TextInput type="date" value={endsOn} onChange={(e) => setEndsOn(e.currentTarget.value)} />
+          <DateField value={endsOn} onChange={setEndsOn} />
         </Field>
       </Group>
       <Field label={t('supporters.goals.description')}>
